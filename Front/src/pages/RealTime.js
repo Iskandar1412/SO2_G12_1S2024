@@ -8,7 +8,7 @@ function RealTime() {
     const [cpuUsado, setCPUUsado] = useState(0);
     
     const charDataCPU = {
-        labels: ['Usada', 'Libre', 'Proceso a', 'Proceso b'],
+        labels: ['Usada', 'Libre', 'Proceso a', 'Proceso b', 'proceso'],
         datasets: [
             {
                 label: 'Grafica CPU',
@@ -18,12 +18,14 @@ function RealTime() {
                     'rgba(23, 185, 153, 0.5)',
                     'rgba(160, 115, 29, 0.7)',
                     'rgba(29, 160, 96, 0.7)',
+                    'rgba(50, 160, 96, 0.7)',
                 ],
                 borderColor: [
                     'rgba(185, 35, 23, 1)',
                     'rgba(23, 185, 153, 1)',
                     'rgba(160, 115, 29, 1)',
                     'rgba(29, 160, 96, 1)',
+                    'rgba(50, 160, 96, 1)',
                 ],
                 borderWidth: 1,
             }

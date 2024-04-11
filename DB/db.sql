@@ -1,10 +1,11 @@
-USE mem_monitoring;
+CREATE DATABASE SOPES;
+USE SOPES;
 
-CREATE TABLE memory_requests (
+CREATE TABLE SOPES (
     id INT AUTO_INCREMENT PRIMARY KEY,
     pid INT,
     process_name VARCHAR(255),
-    call_ VARCHAR(10),
+    call_type ENUM('mmap', 'munmap'),
     memory_size INT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    request_datetime DATETIME
 );

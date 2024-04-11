@@ -1,0 +1,15 @@
+global process_info
+
+probe kernel.function("mmap") {
+    process_info[tid()] = sprintf("%d,%s,%s,%d", pid(), execname(), "mmap", $3)
+}
+
+probe kernel.function("munmap") {
+    process_info[tid()] = sprintf("%d,%s,%s,%d", pid(), execname(), "munmap", $3)
+}
+
+probe end {
+    foreach (pid_tid in process_info) {
+        printf("%s\n", process_info[pid_tid])
+    }
+}

@@ -50,24 +50,40 @@ function App() {
 
 export default App;
 
-/*Button (sidebarToggle)
+/*
 
-window.addEventListener('DOMContentLoaded', event => {
+import React, { useEffect, useState } from 'react';
+import socketIOClient from 'socket.io-client';
 
-    // Toggle the side navigation
-    const sidebarToggle = document.body.querySelector('#sidebarToggle');
-    if (sidebarToggle) {
-        // Uncomment Below to persist sidebar toggle between refreshes
-        // if (localStorage.getItem('sb|sidebar-toggle') === 'true') {
-        //     document.body.classList.toggle('sb-sidenav-toggled');
-        // }
-        sidebarToggle.addEventListener('click', event => {
-            event.preventDefault();
-            document.body.classList.toggle('sb-sidenav-toggled');
-            localStorage.setItem('sb|sidebar-toggle', document.body.classList.contains('sb-sidenav-toggled'));
+const ENDPOINT = 'http://localhost:3000'; // URL del servidor Socket.IO
+
+function App() {
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+        const socket = socketIOClient(ENDPOINT);
+        socket.on('dataUpdate', newData => {
+            setData(prevData => [...prevData, newData]);
         });
-    }
 
-});
+        return () => {
+            socket.disconnect();
+        };
+    }, []);
+
+    return (
+        <div>
+            <h1>Datos de la base de datos:</h1>
+            <ul>
+                {data.map((item, index) => (
+                    <li key={index}>{item}</li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+
+export default App;
+
 
 */

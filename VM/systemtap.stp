@@ -1,15 +1,22 @@
-global process_info
+#! /usr/bin/env stap
 
-probe kernel.function("mmap") {
-    process_info[tid()] = sprintf("%d,%s,%s,%d", pid(), execname(), "mmap", $3)
+global mmap_calls
+global munmap_calls
+
+probe syscall.mmap2 {
+    mmap_calls[tid()] = gettimeofday_us()
 }
 
-probe kernel.function("munmap") {
-    process_info[tid()] = sprintf("%d,%s,%s,%d", pid(), execname(), "munmap", $3)
+probe syscall.munmap {
+    munmap_calls[tid()] = gettimeofday_us()
 }
 
 probe end {
-    foreach (pid_tid in process_info) {
-        printf("%s\n", process_info[pid_tid])
+    foreach (pid in mmap_calls) {
+        printf("PID: %d, Call: mmap(), Timestamp: %d\n", pid, mmap_calls[pid])
+    }
+
+    foreach (pid in munmap_calls) {
+        printf("PID: %d, Call: munmap(), Timestamp: %d\n", pid, munmap_calls[pid])
     }
 }

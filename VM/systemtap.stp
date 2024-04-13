@@ -1,22 +1,17 @@
 #! /usr/bin/env stap
 
-global mmap_calls
-global munmap_calls
+
 
 probe syscall.mmap2 {
-    mmap_calls[tid()] = gettimeofday_us()
+    ts = gettimeofday_s();
+    length = length; 
+    //pid, nombre, proceso, fecha, length
+    printf("%d,%s,%s,%s,%d\n", pid(), execname(), "mmap", ctime(ts), length)
 }
 
 probe syscall.munmap {
-    munmap_calls[tid()] = gettimeofday_us()
-}
-
-probe end {
-    foreach (pid in mmap_calls) {
-        printf("PID: %d, Call: mmap(), Timestamp: %d\n", pid, mmap_calls[pid])
-    }
-
-    foreach (pid in munmap_calls) {
-        printf("PID: %d, Call: munmap(), Timestamp: %d\n", pid, munmap_calls[pid])
-    }
+    ts = gettimeofday_s();
+    length = length; 
+    //pid, nombre, proceso, fecha, length
+    printf("%d,%s,%s,%s,%d\n", pid(), execname(), "munmap", ctime(ts), length)
 }

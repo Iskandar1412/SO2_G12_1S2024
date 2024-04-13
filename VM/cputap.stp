@@ -1,0 +1,34 @@
+#! /usr/bin/env stap
+
+global last_ts = 0
+global last_cpu_time = 0
+
+probe begin {
+    last_cpu_time = gettimeofday_s()
+}
+
+probe syscall.mmap2 {
+    ts = gettimeofday_s();
+    if (last_ts != 0) {
+        elapsed_time = ts - last_ts;
+        total_elapsed_time = ts - last_cpu_time;
+        cpu_percent = (elapsed_time * 100) / total_elapsed_time;
+    } else {
+        cpu_percent = 0;
+    }
+    printf("PID: %d, Process Name: %s, Proc: %s, Time: %s, cpu_percent: %d%%\n", pid(), execname(), "mmap", ctime(ts), cpu_percent)
+    last_ts = ts;
+}
+
+probe syscall.munmap {
+    ts = gettimeofday_s();
+    if (last_ts != 0) {
+        elapsed_time = ts - last_ts;
+        total_elapsed_time = ts - last_cpu_time;
+        cpu_percent = (elapsed_time * 100) / total_elapsed_time;
+    } else {
+        cpu_percent = 0;
+    }
+    printf("PID: %d, Process Name: %s, Proc: %s, Time: %s, cpu_percent: %d%%\n", pid(), execname(), "munmap", ctime(ts), cpu_percent)
+    last_ts = ts;
+}

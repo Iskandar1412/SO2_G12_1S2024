@@ -1,0 +1,26 @@
+#! /usr/bin/env stap
+
+probe syscall.mmap2 {
+    ts = gettimeofday_s();
+    printf("PID: %d, Process Name: %s, Proc: %s, Time: %s\n", pid(), execname(), "mmap", ctime(ts))
+}
+
+probe syscall.munmap {
+    ts = gettimeofday_s();
+    printf("PID: %d, Process Name: %s, Proc: %s, Time: %s\n", pid(), execname(), "munmap", ctime(ts))
+}
+
+
+#! /usr/bin/env stap
+
+probe syscall.mmap2 {
+    ts = gettimeofday_s();
+    //pid, nombre, proceso, fecha
+    printf("%d,%s,%s,%s\n", pid(), execname(), "mmap", ctime(ts))
+}
+
+probe syscall.munmap {
+    ts = gettimeofday_s();
+    //pid, nombre, proceso, fecha
+    printf("%d,%s,%s,%s\n", pid(), execname(), "munmap", ctime(ts))
+}

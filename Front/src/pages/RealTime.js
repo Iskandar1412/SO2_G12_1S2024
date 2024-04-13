@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import PieChartCPU from '../graphs/PieChartCPU'
+import SocketIOClient from 'socket.io-client'
 
 function RealTime() {
     //const [dataram, setdataram] = useRef([]);
     //const [datacpu, setdatacpu] = useRef([]);
     const [cpuUsado, setCPUUsado] = useState(0);
-    
+    socket.io-client
     const charDataCPU = {
         labels: ['Usada', 'Libre', 'Proceso a', 'Proceso b', 'proceso'],
         datasets: [

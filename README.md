@@ -11,6 +11,12 @@ gcc lector.c -o lector -lmysqlclient -D_GNU_SOURCE
 ./lector
 ```
 
+- NodeJS
+
+```
+npm install express socket.io mysql cors mysql2
+```
+
 - Redirigir el systemtap
 
 ```

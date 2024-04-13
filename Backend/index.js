@@ -1,14 +1,17 @@
-// npm install express socket.io mysql
-
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
-const mysql = require('mysql');
+const socketIO = require('socket.io');
+const mysql = require('mysql2');
+const cors = require('cors'); 
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIO(server);
 
+
+app.use(cors());
+
+// Configuración MySQL
 const db = mysql.createConnection({
     host: '172.17.0.2',
     user: 'root',
@@ -16,25 +19,37 @@ const db = mysql.createConnection({
     database: 'SOPES'
 });
 
-
-db.connect(err => {
+// Conexión DB
+db.connect((err) => {
     if (err) {
-        throw err;
+        console.error('Error al conectar a la base de datos:', err);
+        return;
     }
-    console.log('Conectado a la base de datos MySQL');
+    console.log('Conexión exitosa a la base de datos MySQL');
 });
 
-// Configuración Socket.IO
-io.on('connection', socket => {
+// Configurar Socket.IO
+io.on('connection', (socket) => {
     console.log('Cliente conectado');
+    
+    // Consultar DB
+    db.query('SELECT * FROM SOPES', (err, rows) => {
+        if (err) {
+            console.error('Error al ejecutar la consulta:', err);
+            return;
+        }
+        // Envio de datos
+        socket.emit('data', rows);
+    });
+
+    // Desconectar
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado');
+    });
 });
 
-const query = db.query('SELECT * FROM SOPES');
-query.on('result', row => {
-    io.emit('dataUpdate', row); 
-});
-
-const PORT = process.env.PORT || 3000;
+// Iniciar el servidor HTTP
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-    console.log(`Servidor backend escuchando en el puerto ${PORT}`);
+    console.log(`Servidor HTTP en el puerto ${PORT}`);
 });

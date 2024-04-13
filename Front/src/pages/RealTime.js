@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import PieChartCPU from '../graphs/PieChartCPU'
 import SocketIOClient from 'socket.io-client'
+import path_back from '../../path_back';
 
 function RealTime() {
     //const [dataram, setdataram] = useRef([]);
@@ -76,9 +77,15 @@ function RealTime() {
     });
 
     useEffect(() => {
-        fetchData();
-        const intervalId = setInterval(fetchData, 5000);
-        return () => clearInterval(intervalId);
+        const socket = socketIOClient(path_back, {
+            reconnection: true,
+            reconnectionAttempts: 3,
+            reconnectionDelay: 1000,
+        });
+
+        socket.on('data', (data) => {
+            console.log(data)
+        })
     });
 
    

@@ -1,5 +1,13 @@
 # SO2_G12_1S2024
 
+
+- Redirigir el systemtap
+
+```
+sudo stap -o output.txt systemtap.stp
+```
+
+
 - Obtener Kernel
 
 ```

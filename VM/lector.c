@@ -15,6 +15,7 @@
 #define DATABASE "SOPES"
 
 #define MAX_QUERY_LEN 500
+#define MAX_LINE_LENGTH 1024
 
 MYSQL *conn;
 
@@ -25,51 +26,70 @@ void finish_with_error()
     exit(1);
 }
 
-int main()
-{
+typedef struct {
+    int pid;
+    char process_name[50];
+    char syscall_name[15];
+    char timestamp[50];
+    int length;
+} SystemTapRecord;
+
+void parse_line(char *line, SystemTapRecord *record) {
+    sscanf(line, "%d,%[^,],%[^,],%[^,],%d", &record->pid, record->process_name, record->syscall_name, record->timestamp, &record->length);
+}
+
+int main() {
     MYSQL_RES *res;
     MYSQL_ROW row;
     char query[MAX_QUERY_LEN];
 
-    conn = mysql_init(NULL);
-    if (conn == NULL)
-    {
-        fprintf(stderr, "mysql_init() failed\n");
-        exit(1);
+    // conn = mysql_init(NULL);
+    // if (conn == NULL)
+    // {
+    //     fprintf(stderr, "mysql_init() failed\n");
+    //     exit(1);
+    // }
+
+    // if (mysql_real_connect(conn, SERVER, USER, PASSWORD, DATABASE, 0, NULL, 0) == NULL)
+    // {
+    //     fprintf(stderr, "Error connecting to database: %s\n", mysql_error(conn));
+    //     mysql_close(conn);
+    //     exit(1);
+    // }
+
+    // printf("Connected to MySQL database successfully\n");
+
+    FILE *fp;
+    char line[MAX_LINE_LENGTH];
+    SystemTapRecord record;
+
+    fp = popen("sudo stap systemtap.stp", "r");
+    if (fp == NULL) {
+        perror("Error al ejecutar el script de SystemTap");
+        exit(EXIT_FAILURE);
     }
 
-    if (mysql_real_connect(conn, SERVER, USER, PASSWORD, DATABASE, 0, NULL, 0) == NULL)
-    {
-        fprintf(stderr, "Error connecting to database: %s\n", mysql_error(conn));
-        mysql_close(conn);
-        exit(1);
+    while (fgets(line, MAX_LINE_LENGTH, fp) != NULL) {
+        parse_line(line, &record);
+
+        printf("PID: %d, Process: %s, Syscall: %s, Timestamp: %s, Length: %d\n", record.pid, record.process_name, record.syscall_name, record.timestamp, record.length);
     }
 
-    printf("Connected to MySQL database successfully\n");
+    pclose(fp);
 
-    // Your SystemTap script goes here
-    // For simplicity, I'll just simulate the data insertion
-    // Replace this with your actual data retrieval logic from SystemTap
+    // Envuiar a SQL
+    // sprintf(query, "INSERT INTO SOPES (pid, process_name, call_type, memory_size, request_datetime) VALUES (%d, '%s', '%s', %d, '%s')",
+    //         pid, process_name, call_type, memory_size, request_datetime);
 
-    int pid = 1234; // Example PID
-    char process_name[] = "example_process";
-    char call_type[] = "mmap";
-    int memory_size = 1024; // Example memory size
-    char request_datetime[] = "2024-04-12 12:00:00"; // Example datetime
+    // // Ejecutar
+    // if (mysql_query(conn, query))
+    // {
+    //     fprintf(stderr, "Query execution failed: %s\n", mysql_error(conn));
+    //     mysql_close(conn);
+    //     exit(1);
+    // }
 
-    // Prepare the SQL statement
-    sprintf(query, "INSERT INTO SOPES (pid, process_name, call_type, memory_size, request_datetime) VALUES (%d, '%s', '%s', %d, '%s')",
-            pid, process_name, call_type, memory_size, request_datetime);
-
-    // Execute the SQL statement
-    if (mysql_query(conn, query))
-    {
-        fprintf(stderr, "Query execution failed: %s\n", mysql_error(conn));
-        mysql_close(conn);
-        exit(1);
-    }
-
-    printf("Data inserted successfully\n");
+    // printf("Data inserted successfully\n");
 
     mysql_close(conn);
 

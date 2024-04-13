@@ -4,10 +4,13 @@
 #include <mysql/mysql.h>
 #include <time.h>
 
+
 // sudo apt-get install libmysqlclient-dev
 // gcc lector.c -o lector -I/usr/include/mysql -lmysqlclient
 // gcc lector.c -o lector -lmysqlclient
 // sudo stap systemtap.stp | ./lector
+// Ultima funcional
+// gcc lector.c -o lector -lmysqlclient -D_GNU_SOURCE
 
 #define SERVER "172.17.0.2"
 #define USER "root"
@@ -34,30 +37,38 @@ typedef struct {
     int length;
 } SystemTapRecord;
 
+// void parse_line(char *line, SystemTapRecord *record) {
+//     sscanf(line, "%d,%[^,],%[^,],%[^,],%d", &record->pid, record->process_name, record->syscall_name, record->timestamp, &record->length);
+// }
+
 void parse_line(char *line, SystemTapRecord *record) {
     sscanf(line, "%d,%[^,],%[^,],%[^,],%d", &record->pid, record->process_name, record->syscall_name, record->timestamp, &record->length);
+
+    // Conversion tiempo
+    struct tm tm;
+    strptime(record->timestamp, "%a %b %d %H:%M:%S %Y", &tm);
+    strftime(record->timestamp, sizeof(record->timestamp), "%Y-%m-%d %H:%M:%S", &tm);
 }
+
 
 int main() {
     MYSQL_RES *res;
     MYSQL_ROW row;
     char query[MAX_QUERY_LEN];
 
-    // conn = mysql_init(NULL);
-    // if (conn == NULL)
-    // {
-    //     fprintf(stderr, "mysql_init() failed\n");
-    //     exit(1);
-    // }
+    conn = mysql_init(NULL);
+    if (conn == NULL) {
+        fprintf(stderr, "mysql_init() failed\n");
+        exit(1);
+    }
 
-    // if (mysql_real_connect(conn, SERVER, USER, PASSWORD, DATABASE, 0, NULL, 0) == NULL)
-    // {
-    //     fprintf(stderr, "Error connecting to database: %s\n", mysql_error(conn));
-    //     mysql_close(conn);
-    //     exit(1);
-    // }
+    if (mysql_real_connect(conn, SERVER, USER, PASSWORD, DATABASE, 0, NULL, 0) == NULL) {
+        fprintf(stderr, "Error connecting to database: %s\n", mysql_error(conn));
+        mysql_close(conn);
+        exit(1);
+    }
 
-    // printf("Connected to MySQL database successfully\n");
+    printf("Connected to MySQL database successfully\n");
 
     FILE *fp;
     char line[MAX_LINE_LENGTH];
@@ -72,24 +83,17 @@ int main() {
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL) {
         parse_line(line, &record);
 
-        printf("PID: %d, Process: %s, Syscall: %s, Timestamp: %s, Length: %d\n", record.pid, record.process_name, record.syscall_name, record.timestamp, record.length);
+        // printf("PID: %d, Process: %s, Syscall: %s, Timestamp: %s, Length: %d\n", record.pid, record.process_name, record.syscall_name, record.timestamp, record.length);
+        
+        sprintf(query, "INSERT INTO SOPES (pid, process_name, call_type, memory_size, request_datetime) VALUES (%d, '%s', '%s', %d, '%s')", record.pid, record.process_name, record.syscall_name, record.length, record.timestamp);
+        if (mysql_query(conn, query)) {
+            fprintf(stderr, "Query execution failed: %s\n", mysql_error(conn));
+            mysql_close(conn);
+            exit(1);
+        }
     }
 
     pclose(fp);
-
-    // Envuiar a SQL
-    // sprintf(query, "INSERT INTO SOPES (pid, process_name, call_type, memory_size, request_datetime) VALUES (%d, '%s', '%s', %d, '%s')",
-    //         pid, process_name, call_type, memory_size, request_datetime);
-
-    // // Ejecutar
-    // if (mysql_query(conn, query))
-    // {
-    //     fprintf(stderr, "Query execution failed: %s\n", mysql_error(conn));
-    //     mysql_close(conn);
-    //     exit(1);
-    // }
-
-    // printf("Data inserted successfully\n");
 
     mysql_close(conn);
 
@@ -106,5 +110,5 @@ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 80 --slave /
 */
 
 /*
-
+gcc lector.c -o lector -lmysqlclient -D_GNU_SOURCE
 */

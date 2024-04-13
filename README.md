@@ -1,6 +1,16 @@
 # SO2_G12_1S2024
 
 
+- Comandos usados para Correr lector.c
+
+```
+gcc lector.c -o lector -lmysqlclient -D_GNU_SOURCE
+```
+
+```
+./lector
+```
+
 - Redirigir el systemtap
 
 ```

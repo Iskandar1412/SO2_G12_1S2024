@@ -101,7 +101,7 @@ function RealTime() {
 
             // console.log('data',data);
             setMySQLData(data)
-            processDataByPidAndName();
+            
         });
 
         
@@ -109,6 +109,10 @@ function RealTime() {
             socket.off('data');
         }
     }
+
+    useEffect(() => {
+        processDataByPidAndName();
+    }, [MySQLData])
 
     const processDataByPidAndName = () => {
         const processedData = {};
@@ -128,7 +132,7 @@ function RealTime() {
                 processedData[key].munmap_total += item.memory_size;
             }
         });
-        console.log(processedData);
+        console.log(Object.values(processedData));
     };
 
    

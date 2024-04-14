@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import axios from 'axios';
 import PieChartCPU from '../graphs/PieChartCPU'
 import socketIOClient from 'socket.io-client'
 import { path_back } from '../path_back';
@@ -56,10 +55,6 @@ function RealTime() {
 
     //console.log("CHart data:" , charDataCPU);
     
-    const [contentPost, setcontentPost] = useState([]);
-    const handleText = (e) => {
-        setcontentPost(e.target.value);
-    };
 
     
 

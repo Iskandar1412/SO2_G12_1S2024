@@ -21,6 +21,8 @@ function RealTime() {
         { base: "rgba(46, 134, 193, 0.7)", borde: "rgba(46, 134, 193, 1)" },
         { base: "rgba(23, 165, 137, 0.7)", borde: "rgba(23, 165, 137, 1)" },
         { base: "rgba(241, 196, 15, 0.7)", borde: "rgba(241, 196, 15, 1)" },
+        { base: "rgba(51, 255, 144, 0.7)", borde: "rgba(51, 255, 144, 1)" },
+        { base: "rgba(51, 116, 255, 0.7)", borde: "rgba(51, 116, 255, 1)" },
     ];
     
 
@@ -83,57 +85,72 @@ function RealTime() {
     useEffect(() => {
         setInterval(() => {
             funcionObtener();
-            
         }, 1000);
     }, []);
 
     const funcionObtener  =() => {
-        const socket = socketIOClient(path_back, {
-            reconnection: true,
-            reconnectionAttempts: 3,
-            reconnectionDelay: 1000,
-        });
+        try {
+            const socket = socketIOClient(path_back, {
+                reconnection: true,
+                reconnectionAttempts: 3,
+                reconnectionDelay: 1000,
+            });
 
-        
-
-        socket.on('data', (data) => {
-
-
-            // console.log('data',data);
-            setMySQLData(data)
+            socket.on('data', (data) => {
+                // console.log('data',data);
+                setMySQLData(data)
+                
+            });
+    
             
-        });
-
-        
-        return () => {
-            socket.off('data');
-        }
+            return () => {
+                socket.off('data');
+            }
+        } catch (e) { }
     }
 
     useEffect(() => {
-        processDataByPidAndName();
+        processDataByDatos();
     }, [MySQLData])
 
-    const processDataByPidAndName = () => {
-        const processedData = {};
+    const processDataByDatos = () => {
+        const Datos = {};
         MySQLData.forEach(item => {
-            const key = `${item.process_name}`;
-            if (!processedData[key]) {
-                processedData[key] = {
-                    pid: item.pid,
-                    process_name: item.process_name,
-                    mmap_total: 0,
-                    munmap_total: 0
+            const { pid, process_name, call_type, memory_size } = item;
+            
+            
+            if (!Datos[pid]) {
+                Datos[pid] = {
+                    Proceso: process_name,
+                    Memoria: 0,
+                    mmap: 0,
+                    munmap: 0,
+                    percentaje : 0
                 };
             }
-            if (item.call_type === 'mmap') {
-                processedData[key].mmap_total += item.memory_size;
-            } else if (item.call_type === 'munmap') {
-                processedData[key].munmap_total += item.memory_size;
+            
+            if (call_type === 'mmap') {
+                Datos[pid].mmap += memory_size;
+                Datos[pid].Memoria += memory_size;
+                Datos[pid].percentaje = (Datos[pid].Memoria/(10*(2**30)))*100;
+            } else if (call_type === 'munmap') {
+                Datos[pid].Memoria -= memory_size;
+                Datos[pid].munmap += memory_size;
+                Datos[pid].percentaje = (Datos[pid].Memoria/(10*(2**30)))*100;
             }
         });
-        console.log(Object.values(processedData));
+        
+        const DatosArray = Object.keys(Datos).map(pid => {
+            return {
+                PID: pid,
+                ...Datos[pid]
+            };
+        });
+        
+        console.log(DatosArray);
     };
+    
+    
 
    
     const toggleItemExpansion = (itemID) => {

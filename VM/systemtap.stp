@@ -6,12 +6,12 @@ probe syscall.mmap2 {
     ts = gettimeofday_s();
     length = length; 
     //pid, nombre, proceso, fecha, length
-    printf("%d,%s,%s,%s,%d\n", pid(), execname(), "mmap", ctime(ts), length)
+    printf("%d,%s,%s,%s,%ld\n", pid(), execname(), "mmap", ctime(ts), (length/1024))
 }
 
 probe syscall.munmap {
     ts = gettimeofday_s();
     length = length; 
     //pid, nombre, proceso, fecha, length
-    printf("%d,%s,%s,%s,%d\n", pid(), execname(), "munmap", ctime(ts), length)
+    printf("%d,%s,%s,%s,%ld\n", pid(), execname(), "munmap", ctime(ts), (length/1024))
 }

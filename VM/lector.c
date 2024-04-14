@@ -3,6 +3,7 @@
 #include <string.h>
 #include <mysql/mysql.h>
 #include <time.h>
+#include <unistd.h>
 
 // sudo apt-get install libmysqlclient-dev
 // sudo apt-get install libcurl4-openssl-dev
@@ -38,12 +39,12 @@ typedef struct {
     char process_name[50];
     char syscall_name[15];
     char timestamp[50];
-    int length;
+    unsigned long length;
 } SystemTapRecord;
 
 
 void parse_line(char *line, SystemTapRecord *record) {
-    sscanf(line, "%d,%[^,],%[^,],%[^,],%d", &record->pid, record->process_name, record->syscall_name, record->timestamp, &record->length);
+    sscanf(line, "%d,%[^,],%[^,],%[^,],%ld", &record->pid, record->process_name, record->syscall_name, record->timestamp, &record->length);
 
     // Conversion tiempo
     struct tm tm;
@@ -81,13 +82,14 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
+    // printf("a\n");
     while (fgets(line, MAX_LINE_LENGTH, fp) != NULL) {
+        // printf("b\n");
         parse_line(line, &record);
-
-        // printf("PID: %d, Process: %s, Syscall: %s, Timestamp: %s, Length: %d\n", record.pid, record.process_name, record.syscall_name, record.timestamp, record.length);
+        // printf("PID: %d, Process: %s, Syscall: %s, Timestamp: %s, Length: %ld\n", record.pid, record.process_name, record.syscall_name, record.timestamp, record.length);
         
-        sprintf(query, "INSERT INTO SOPES (pid, process_name, call_type, memory_size, request_datetime) VALUES (%d, '%s', '%s', %d, '%s')", record.pid, record.process_name, record.syscall_name, record.length, record.timestamp);
-        
+        sprintf(query, "INSERT INTO SOPES (pid, process_name, call_type, memory_size, request_datetime) VALUES (%d, '%s', '%s', %ld, '%s')", record.pid, record.process_name, record.syscall_name, record.length, record.timestamp);
+        sleep(1);
         if (mysql_query(conn, query)) {
             fprintf(stderr, "Query execution failed: %s\n", mysql_error(conn));
             mysql_close(conn);

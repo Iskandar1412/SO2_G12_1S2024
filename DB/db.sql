@@ -11,6 +11,6 @@ CREATE TABLE SOPES (
 );
 
 /*
-docker run -d --name sopes -e MYSQL_ROOT_PASSWORD=iskandar -p 3306:3306 mysql:latest
-docker inspect sopes | grep -i IPAddress
+docker run -d --name sopes2 -e MYSQL_ROOT_PASSWORD=iskandar -p 3306:3306 mysql:latest
+docker inspect sopes2 | grep -i IPAddress
 */

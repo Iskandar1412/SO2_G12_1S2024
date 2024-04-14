@@ -4,13 +4,14 @@
 #include <mysql/mysql.h>
 #include <time.h>
 
-
 // sudo apt-get install libmysqlclient-dev
+// sudo apt-get install libcurl4-openssl-dev
 // gcc lector.c -o lector -I/usr/include/mysql -lmysqlclient
 // gcc lector.c -o lector -lmysqlclient
 // sudo stap systemtap.stp | ./lector
 // Ultima funcional
 // gcc lector.c -o lector -lmysqlclient -D_GNU_SOURCE
+
 
 #define SERVER "172.17.0.2"
 #define USER "root"
@@ -20,10 +21,13 @@
 #define MAX_QUERY_LEN 500
 #define MAX_LINE_LENGTH 1024
 
+
 MYSQL *conn;
 
-void finish_with_error()
-{
+
+
+
+void finish_with_error() {
     fprintf(stderr, "%s\n", mysql_error(conn));
     mysql_close(conn);
     exit(1);
@@ -37,9 +41,6 @@ typedef struct {
     int length;
 } SystemTapRecord;
 
-// void parse_line(char *line, SystemTapRecord *record) {
-//     sscanf(line, "%d,%[^,],%[^,],%[^,],%d", &record->pid, record->process_name, record->syscall_name, record->timestamp, &record->length);
-// }
 
 void parse_line(char *line, SystemTapRecord *record) {
     sscanf(line, "%d,%[^,],%[^,],%[^,],%d", &record->pid, record->process_name, record->syscall_name, record->timestamp, &record->length);
@@ -86,6 +87,7 @@ int main() {
         // printf("PID: %d, Process: %s, Syscall: %s, Timestamp: %s, Length: %d\n", record.pid, record.process_name, record.syscall_name, record.timestamp, record.length);
         
         sprintf(query, "INSERT INTO SOPES (pid, process_name, call_type, memory_size, request_datetime) VALUES (%d, '%s', '%s', %d, '%s')", record.pid, record.process_name, record.syscall_name, record.length, record.timestamp);
+        
         if (mysql_query(conn, query)) {
             fprintf(stderr, "Query execution failed: %s\n", mysql_error(conn));
             mysql_close(conn);

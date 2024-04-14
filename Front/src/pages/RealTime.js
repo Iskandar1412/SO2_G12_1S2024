@@ -1,14 +1,30 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import PieChartCPU from '../graphs/PieChartCPU'
-import SocketIOClient from 'socket.io-client'
-import path_back from '../../path_back';
+import socketIOClient from 'socket.io-client'
+import { path_back } from '../path_back';
 
 function RealTime() {
     //const [dataram, setdataram] = useRef([]);
     //const [datacpu, setdatacpu] = useRef([]);
     const [cpuUsado, setCPUUsado] = useState(0);
-    socket.io-client
+    const colorBase = [
+        { base: "rgba(185, 35, 23, 0.5)", borde: "rgba(185, 35, 23, 1)" },
+        { base: "rgba(23, 185, 153, 0.5)", borde: "rgba(23, 185, 153, 1)" },
+        { base: "rgba(160, 115, 29, 0.7)", borde: "rgba(160, 115, 29, 1)" },
+        { base: "rgba(29, 160, 96, 0.7)", borde: "rgba(29, 160, 96, 1)" },
+        { base: "rgba(230, 126, 34, 0.7)", borde: "rgba(230, 126, 34, 1)" },
+        { base: "rgba(52, 73, 94, 0.7)", borde: "rgba(52, 73, 94, 1)" },
+        { base: "rgba(50, 160, 96, 0.7)", borde: "rgba(50, 160, 96, 1)" },
+        { base: "rgba(169, 50, 38, 0.7)", borde: "rgba(169, 50, 38, 1)" },
+        { base: "rgba(125, 60, 152, 0.7)", borde: "rgba(125, 60, 152, 1)" },
+        { base: "rgba(46, 134, 193, 0.7)", borde: "rgba(46, 134, 193, 1)" },
+        { base: "rgba(23, 165, 137, 0.7)", borde: "rgba(23, 165, 137, 1)" },
+        { base: "rgba(241, 196, 15, 0.7)", borde: "rgba(241, 196, 15, 1)" },
+    ];
+    
+
+
     const charDataCPU = {
         labels: ['Usada', 'Libre', 'Proceso a', 'Proceso b', 'proceso'],
         datasets: [
@@ -16,18 +32,18 @@ function RealTime() {
                 label: 'Grafica CPU',
                 data: [55, 20, 10, 15, cpuUsado+5],
                 backgroundColor: [
-                    'rgba(185, 35, 23, 0.5)',
-                    'rgba(23, 185, 153, 0.5)',
-                    'rgba(160, 115, 29, 0.7)',
-                    'rgba(29, 160, 96, 0.7)',
-                    'rgba(50, 160, 96, 0.7)',
+                    colorBase[0].base,
+                    colorBase[1].base,
+                    colorBase[2].base,
+                    colorBase[3].base,
+                    colorBase[4].base,
                 ],
                 borderColor: [
-                    'rgba(185, 35, 23, 1)',
-                    'rgba(23, 185, 153, 1)',
-                    'rgba(160, 115, 29, 1)',
-                    'rgba(29, 160, 96, 1)',
-                    'rgba(50, 160, 96, 1)',
+                    colorBase[0].borde,
+                    colorBase[1].borde,
+                    colorBase[2].borde,
+                    colorBase[3].borde,
+                    colorBase[4].borde,
                 ],
                 borderWidth: 1,
             }
@@ -61,32 +77,59 @@ function RealTime() {
     //    { id: 10, proceso:'hola', pid: 1364, uid: 469, estado: "S", memoriav: 550, memoriaf: 1468 },
     //    { id: 11, proceso:'hola', pid: 1364, uid: 469, estado: "S", memoriav: 550, memoriaf: 1468 },
     //];
-    const fetchData = useCallback(async () => {
-        
-        try {
-            const response = await axios.get(`http://localhost:3200/live?eQuipo=`);
-            const data = response.data;
-            const proceso_val = data.CPU.Procesos;
-            setCPUUsado(data.CPU.Uso_de_CPU);
-            console.log(data.RAM);
-            setProcesos(proceso_val)
-            //console.log(data.CPU.Uso_de_CPU, data.RAM.Porcentaje_en_uso)
-        } catch (e) {
-            console.log('Error en la obtención de datos en tiempo real', e);
-        }
-    });
+    
+    const [MySQLData, setMySQLData] = useState([]);
 
     useEffect(() => {
+        setInterval(() => {
+            funcionObtener();
+            
+        }, 1000);
+    }, []);
+
+    const funcionObtener  =() => {
         const socket = socketIOClient(path_back, {
             reconnection: true,
             reconnectionAttempts: 3,
             reconnectionDelay: 1000,
         });
 
+        
+
         socket.on('data', (data) => {
-            console.log(data)
-        })
-    });
+
+
+            // console.log('data',data);
+            setMySQLData(data)
+            processDataByPidAndName();
+        });
+
+        
+        return () => {
+            socket.off('data');
+        }
+    }
+
+    const processDataByPidAndName = () => {
+        const processedData = {};
+        MySQLData.forEach(item => {
+            const key = `${item.process_name}`;
+            if (!processedData[key]) {
+                processedData[key] = {
+                    pid: item.pid,
+                    process_name: item.process_name,
+                    mmap_total: 0,
+                    munmap_total: 0
+                };
+            }
+            if (item.call_type === 'mmap') {
+                processedData[key].mmap_total += item.memory_size;
+            } else if (item.call_type === 'munmap') {
+                processedData[key].munmap_total += item.memory_size;
+            }
+        });
+        console.log(processedData);
+    };
 
    
     const toggleItemExpansion = (itemID) => {

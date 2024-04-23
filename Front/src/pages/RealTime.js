@@ -86,9 +86,7 @@ function RealTime() {
     
     
     useEffect(() => {
-        setInterval(() => {
-            funcionObtener();
-        }, 1000);
+        funcionObtener(); 
     }, []);
 
     const funcionObtener  =() => {
@@ -100,9 +98,9 @@ function RealTime() {
             });
 
             socket.on('data', (data) => {
-                // console.log('data',data);
-                setMySQLData(data)
-                
+                //console.log('data',data);
+                console.log("Recibiendo datos")
+                setMySQLData(data)    
             });
     
             
@@ -151,7 +149,7 @@ function RealTime() {
             };
         });
         DatosArray.sort((a, b) => b.Memoria - a.Memoria);
-        console.log(DatosArray)
+        //console.log( 'datos grafica',DatosArray)
         setListaGrafica(DatosArray);
 
         let top10 = DatosArray.filter(proceso => proceso.Memoria >= 0).slice(0, 10);
@@ -172,7 +170,26 @@ function RealTime() {
         lista.push({ Proceso: 'otros', Memoria_Porcent: memoriaRestante });
         lista.push({ Proceso: 'memoria libre', Memoria_Porcent: porcentajeMemoriaLibre });
         setGraphData(lista);
-        console.log(lista)
+        //console.log(lista)
+
+        const procesosTabla = MySQLData.map(item => {
+            const date = new Date(item.request_datetime);
+            const formattedDate = date.getFullYear() + '/' +
+              ('0' + (date.getMonth() + 1)).slice(-2) + '/' +
+              ('0' + date.getDate()).slice(-2) + ' ' +
+              ('0' + date.getHours()).slice(-2) + ':' +
+              ('0' + date.getMinutes()).slice(-2) + ':' +
+              ('0' + date.getSeconds()).slice(-2);
+            return {
+              Memoria: item.memory_size,
+              PID: item.pid,
+              Llamada: item.call_type,
+              Fecha: formattedDate
+            };
+          });
+
+          setProcesos(procesosTabla)
+
     };
     
     
@@ -238,15 +255,15 @@ function RealTime() {
                                             <span>Tamaño</span>
                                             <span>Fecha</span>
                                         </div>
-                                        {procesos.map(proceso =>
+                                        {procesos.map((proceso, index) =>
                                             <div
-                                                key={proceso.Proceso}
+                                                key={index}
                                                 className={`list-item ${items === proceso.Proceso ? 'expanded' : ''}`}
                                                 onClick={() => toggleItemExpansion(proceso.Proceso)}
                                             >
                                                 <span>{ proceso.PID }</span>
                                                 <span>{ proceso.Llamada }</span>
-                                                <span>{ proceso.Proceso }</span>
+                                                <span>{ proceso.Memoria }</span>
                                                 <span>{ proceso.Fecha }</span>
                                             </div>
                                         )}

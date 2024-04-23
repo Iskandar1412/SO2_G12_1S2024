@@ -1,3 +1,10 @@
+/*
+( ```
+npm install express socket.io mysql cors mysql2
+```)
+*/
+
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -25,14 +32,16 @@ const db = mysql.createPool({
 });
 
 // Consulta DB
-function fetchDataFromDB(callback) {
-    db.query('SELECT * FROM SOPES', (err, rows) => {
-        if (err) {
-            console.error('Error al ejecutar la consulta:', err);
-            callback(err, null);
-            return;
-        }
-        callback(null, rows);
+function fetchDataFromDB() {
+    return new Promise((resolve, reject) => {
+        db.query('SELECT * from SOPES ORDER BY id DESC LIMIT 1000;', (err, rows) => {
+            if (err) {
+                console.error('Error al ejecutar la consulta:', err);
+                reject(err);
+                return;
+            }
+            resolve(rows);
+        });
     });
 }
 
@@ -42,11 +51,16 @@ function fetchDataFromDB(callback) {
 io.on('connection', (socket) => {
     console.log('Cliente conectado');
 
-    fetchDataFromDB((err, data) => {
-        if (!err) {
+    // Emitir datos cada segundo
+    const intervalId = setInterval(async () => {
+        try {
+            const data = await fetchDataFromDB();
             socket.emit('data', data);
+        } catch (err) {
+            console.error('Error al obtener datos de la DB:', err);
+            socket.emit('error', 'Error al obtener datos');
         }
-    });
+    }, 1000); // intervalo de un segundo
 
     socket.on('disconnect', () => {
         console.log('Cliente desconectado');

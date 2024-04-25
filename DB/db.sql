@@ -10,6 +10,9 @@ CREATE TABLE SOPES (
     request_datetime DATETIME
 );
 
+DELETE from SOPES;
+select * from SOPES;
+
 /*
 docker run -d --name sopes2 -e MYSQL_ROOT_PASSWORD=iskandar -p 3306:3306 mysql:latest
 docker inspect sopes2 | grep -i IPAddress

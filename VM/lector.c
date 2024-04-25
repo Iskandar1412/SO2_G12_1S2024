@@ -14,9 +14,14 @@
 // gcc lector.c -o lector -lmysqlclient -D_GNU_SOURCE
 
 
-#define SERVER "172.17.0.2"
-#define USER "root"
-#define PASSWORD "iskandar"
+// #define SERVER "172.17.0.2"
+// #define USER "root"
+// #define PASSWORD "iskandar"
+// #define DATABASE "SOPES"
+
+#define SERVER "database-1.c5kseoemwdnm.us-east-1.rds.amazonaws.com"
+#define USER "admin"
+#define PASSWORD "iskandar1412"
 #define DATABASE "SOPES"
 
 #define MAX_QUERY_LEN 500
@@ -89,7 +94,7 @@ int main() {
         // printf("PID: %d, Process: %s, Syscall: %s, Timestamp: %s, Length: %ld\n", record.pid, record.process_name, record.syscall_name, record.timestamp, record.length);
         
         sprintf(query, "INSERT INTO SOPES (pid, process_name, call_type, memory_size, request_datetime) VALUES (%d, '%s', '%s', %ld, '%s')", record.pid, record.process_name, record.syscall_name, record.length, record.timestamp);
-        sleep(1);
+        sleep(0.65);
         if (mysql_query(conn, query)) {
             fprintf(stderr, "Query execution failed: %s\n", mysql_error(conn));
             mysql_close(conn);

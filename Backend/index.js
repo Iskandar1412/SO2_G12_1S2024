@@ -23,18 +23,26 @@ const io = new Server(server, {
 });
 
 // Configuración MySQL pool
+// const db = mysql.createPool({
+//     connectionLimit: 10, 
+//     host: '172.17.0.2',
+//     user: 'root',
+//     password: 'iskandar',
+//     database: 'SOPES'
+// });
+
 const db = mysql.createPool({
     connectionLimit: 10, 
-    host: '172.17.0.2',
-    user: 'root',
-    password: 'iskandar',
+    host: 'database-1.c5kseoemwdnm.us-east-1.rds.amazonaws.com',
+    user: 'admin',
+    password: 'iskandar1412',
     database: 'SOPES'
 });
 
 // Consulta DB
 function fetchDataFromDB() {
     return new Promise((resolve, reject) => {
-        db.query('SELECT * from SOPES ORDER BY id DESC LIMIT 1000;', (err, rows) => {
+        db.query('SELECT * from SOPES ORDER BY id DESC LIMIT 1200;', (err, rows) => {
             if (err) {
                 console.error('Error al ejecutar la consulta:', err);
                 reject(err);

@@ -223,5 +223,138 @@ CREATE TABLE SOPES (
 );
 ```
 
+## Backend (Node)
+
+- Conexión DB de AWS
+
+```
+const db = mysql.createPool({
+    connectionLimit: 10, 
+    host: 'database-1.c5kseoemwdnm.us-east-1.rds.amazonaws.com',
+    user: 'admin',
+    password: 'iskandar1412',
+    database: 'SOPES'
+});
+```
+
+- Función de retorno de información de la base de datos
+
+Esta función hace una petición a la base de datos para obtener dentro del límite los datos más recientes, retornandolos a una variable para su posterior envio al front mediante WebSocket.
+
+```
+function fetchDataFromDB() {
+    return new Promise((resolve, reject) => {
+        db.query('SELECT * from SOPES ORDER BY id DESC LIMIT 1200;', (err, rows) => {
+            if (err) {
+                console.error('Error al ejecutar la consulta:', err);
+                reject(err);
+                return;
+            }
+            resolve(rows);
+        });
+    });
+}
+```
+
+- Conexión WebSocket
+
+Se encarga de obtener de la base de datos y enviar a tiempo real la información que la base de datos obtiene y recibe. Para este caso se pusieron los emmit para obtener la información `data` la cual retorna al front cada vez que actualiza la información de la base de datos que obtiene. Tambien se cuenta con el `disconnect` el cual cuenta con la desconexión del socket.
+
+```
+io.on('connection', (socket) => {
+    console.log('Cliente conectado');
+
+    const intervalId = setInterval(async () => {
+        try {
+            const data = await fetchDataFromDB();
+            socket.emit('data', data);
+        } catch (err) {
+            console.error('Error al obtener datos de la DB:', err);
+            socket.emit('error', 'Error al obtener datos');
+        }
+    }, 1000); 
+
+    socket.on('disconnect', () => {
+        console.log('Cliente desconectado');
+    });
+});
+```
+
+## Front (React)
+
+- Obtención de información mediante SocketIOClient
+
+Mediante estas funciones a tiempo real se obtiene la información de la información del Backend de NodeJS en el front, mediante un `useEffect` se hace un llamado cada vez que el backend obtenga la información a la función que se encarga de obtener la información de la data obtenida del SystemTap mediante el Backend.
+
+Se tiene otro `useEffect` para que las graficas actualicen cuando estén los datos cargados en las variables correspondientes, para evitar problemas de que una variable este inicializada antes de o este vacia y de error de que es un valor indefinido.
+
+```
+    useEffect(() => {
+        funcionObtener(); 
+    }, []);
+
+    const funcionObtener  =() => {
+        try {
+            const socket = socketIOClient(path_back, {
+                reconnection: true,
+                reconnectionAttempts: 3,
+                reconnectionDelay: 1000,
+            });
+
+            socket.on('data', (data) => {
+                //console.log('data',data);
+                console.log("Recibiendo datos")
+                setMySQLData(data)    
+            });
+    
+            
+            return () => {
+                socket.off('data');
+            }
+        } catch (e) { }
+    }
+
+    useEffect(() => {
+        processDataByDatos();
+    }, [MySQLData])
+```
+
+- Mapeo información Lista Inferior (Procesos)
+
+```
+{procesos.map((proceso, index) =>
+<div
+    key={index}
+    className={`list-item ${items === proceso.Proceso ? 'expanded' : ''}`}
+    onClick={() => toggleItemExpansion(proceso.Proceso)}
+>
+    <span>{ proceso.PID }</span>
+    <span>{ proceso.Llamada }</span>
+    <span>{ proceso.Memoria }</span>
+    <span>{ proceso.Fecha }</span>
+</div>
+)}
+```
+Se encarga de mapear la información cargada en la variable de procesos (que se actualiza constantemente), renderizando la información en la tabla definida
 
 
+- Mapeo Tabla Procesos del Grafico de Pie
+
+```
+{
+    listaGrafica.map(proceso =>
+        <div
+            key={proceso.PID}
+            className={`list-item2 ${items === proceso.PID ? 'expanded' : ''}`}
+            onClick={() => toggleItemExpansion(proceso.PID)}
+        >
+            <span>{ proceso.PID }</span>
+            <span>{ proceso.Proceso }</span>
+            <span>{ proceso.Memoria }</span>
+            <span>{ proceso.percentaje }</span>
+        </div>
+    )
+}
+```
+
+Mapea la información de los procesos con el total de memoria usada (KB)
